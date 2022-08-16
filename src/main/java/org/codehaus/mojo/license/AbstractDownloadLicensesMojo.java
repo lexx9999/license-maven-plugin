@@ -581,29 +581,6 @@ public abstract class AbstractDownloadLicensesMojo
     @Parameter( property = "license.writeVersions", defaultValue = "true" )
     private boolean writeVersions;
 
-    /**
-     * Connect timeout in milliseconds passed to the HTTP client when downloading licenses from remote URLs.
-     *
-     * @since 1.18
-     */
-    @Parameter( property = "license.connectTimeout", defaultValue = "5000" )
-    private int connectTimeout;
-
-    /**
-     * Socket timeout in milliseconds passed to the HTTP client when downloading licenses from remote URLs.
-     *
-     * @since 1.18
-     */
-    @Parameter( property = "license.socketTimeout", defaultValue = "5000" )
-    private int socketTimeout;
-
-    /**
-     * Connect request timeout in milliseconds passed to the HTTP client when downloading licenses from remote URLs.
-     *
-     * @since 1.18
-     */
-    @Parameter( property = "license.connectionRequestTimeout", defaultValue = "5000" )
-    private int connectionRequestTimeout;
 
     /**
      * A list of sanitizers to process the content of license files before storing them locally and before computing
@@ -759,7 +736,7 @@ public abstract class AbstractDownloadLicensesMojo
         final List<ProjectLicenseInfo> depProjectLicenses = new ArrayList<>();
 
         try ( LicenseDownloader licenseDownloader =
-            new LicenseDownloader( findActiveProxy(), connectTimeout, socketTimeout, connectionRequestTimeout,
+            new LicenseDownloader( createHttpClient(),
                                    contentSanitizers(), getCharset() ) )
         {
             for ( LicensedArtifact artifact : dependencies.values() )
@@ -1058,19 +1035,6 @@ public abstract class AbstractDownloadLicensesMojo
     protected Path[] getAutodetectEolFiles()
     {
         return new Path[] { licensesConfigFile.toPath(), project.getBasedir().toPath().resolve( "pom.xml" ) };
-    }
-
-    private Proxy findActiveProxy()
-        throws MojoExecutionException
-    {
-        for ( Proxy proxy : proxies )
-        {
-            if ( proxy.isActive() && "http".equals( proxy.getProtocol() ) )
-            {
-                return proxy;
-            }
-        }
-        return null;
     }
 
     /**

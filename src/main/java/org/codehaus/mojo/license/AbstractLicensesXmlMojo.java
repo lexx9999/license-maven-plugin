@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  * @since 1.19
  */
 public abstract class AbstractLicensesXmlMojo
-    extends AbstractMojo
+    extends AbstractProxySupportMojo
 {
     private static final Logger LOG = LoggerFactory.getLogger( AbstractLicensesXmlMojo.class );
 

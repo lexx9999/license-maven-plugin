@@ -89,69 +89,12 @@ public class LicenseDownloader implements AutoCloseable
     private final Map<String, ContentSanitizer> contentSanitizers;
     private final Charset charset;
 
-    public LicenseDownloader( Proxy proxy, int connectTimeout, int socketTimeout, int connectionRequestTimeout,
+    public LicenseDownloader( CloseableHttpClient client,
                               Map<String, ContentSanitizer> contentSanitizers, Charset charset )
     {
         this.contentSanitizers = contentSanitizers;
         this.charset = charset;
-        final Builder configBuilder = RequestConfig.copy( RequestConfig.DEFAULT ) //
-                        .setConnectTimeout( connectTimeout ) //
-                        .setSocketTimeout( socketTimeout ) //
-                        .setConnectionRequestTimeout( connectionRequestTimeout );
-
-        if ( proxy != null )
-        {
-            configBuilder.setProxy( new HttpHost( proxy.getHost(), proxy.getPort(), proxy.getProtocol() ) );
-        }
-
-        HttpClientBuilder clientBuilder = HttpClients.custom().setDefaultRequestConfig( configBuilder.build() );
-        if ( proxy != null )
-        {
-            if ( proxy.getUsername() != null && proxy.getPassword() != null )
-            {
-                final CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                final Credentials creds = new UsernamePasswordCredentials( proxy.getUsername(), proxy.getPassword() );
-                credsProvider.setCredentials( new AuthScope( proxy.getHost(), proxy.getPort() ), creds );
-                clientBuilder.setDefaultCredentialsProvider( credsProvider );
-            }
-            final String rawNonProxyHosts = proxy.getNonProxyHosts();
-            if ( rawNonProxyHosts != null )
-            {
-                final String[] nonProxyHosts = rawNonProxyHosts.split( "|" );
-                if ( nonProxyHosts.length > 0 )
-                {
-                    final List<Pattern> nonProxyPatterns = new ArrayList<>();
-                    for ( String nonProxyHost : nonProxyHosts )
-                    {
-                        final Pattern pat =
-                            Pattern.compile( nonProxyHost.replaceAll( "\\.", "\\\\." ).replaceAll( "\\*", ".*" ),
-                                             Pattern.CASE_INSENSITIVE );
-                        nonProxyPatterns.add( pat );
-                    }
-                    final HttpHost proxyHost = new HttpHost( proxy.getHost(), proxy.getPort() );
-                    final HttpRoutePlanner routePlanner = new DefaultProxyRoutePlanner( proxyHost )
-                    {
-
-                        @Override
-                        protected HttpHost determineProxy( HttpHost target, HttpRequest request, HttpContext context )
-                            throws HttpException
-                        {
-                            for ( Pattern pattern : nonProxyPatterns )
-                            {
-                                if ( pattern.matcher( target.getHostName() ).matches() )
-                                {
-                                    return null;
-                                }
-                            }
-                            return super.determineProxy( target, request, context );
-                        }
-
-                    };
-                    clientBuilder.setRoutePlanner( routePlanner );
-                }
-            }
-        }
-        this.client = clientBuilder.build();
+        this.client = client;
     }
 
     /**

@@ -30,6 +30,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -39,6 +40,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.codehaus.mojo.license.api.CloseableHttpClientSupplier;
 
 
 /**
@@ -50,6 +52,8 @@ public class UrlRequester
 {
 
     public static final String CLASSPATH_PROTOCOL = "classpath";
+
+    private static CloseableHttpClientSupplier httpClientSupplier = null;
 
     /**
      * Checks if the given input is a URL value.
@@ -136,8 +140,11 @@ public class UrlRequester
         }
         else if ( "http".equals( protocol ) || "https".equals( protocol ) )
         {
-            try ( CloseableHttpClient httpClient = HttpClientBuilder.create().build() )
+            try ( CloseableHttpClient httpClient = (httpClientSupplier != null)
+                ? httpClientSupplier.createHttpClient()
+                : HttpClientBuilder.create().build() )
             {
+
                 HttpGet get = new HttpGet( url );
                 try ( CloseableHttpResponse response = httpClient.execute( get ) )
                 {
@@ -218,5 +225,12 @@ public class UrlRequester
             }
         }
         return list;
+    }
+
+    /** Used to create a http client which is using the active proxy if any.
+     * Put into a static variable, to avoid messing around everywhere.
+     */
+    public static void setHttpClientSupplier(CloseableHttpClientSupplier closeableHttpClientSupplier) {
+        httpClientSupplier=closeableHttpClientSupplier;
     }
 }

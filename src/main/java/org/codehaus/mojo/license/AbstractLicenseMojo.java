@@ -24,12 +24,12 @@ package org.codehaus.mojo.license;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.license.utils.MojoHelper;
+import org.codehaus.mojo.license.utils.UrlRequester;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ import java.io.File;
  * @since 1.0
  */
 public abstract class AbstractLicenseMojo
-    extends AbstractMojo
+    extends AbstractProxySupportMojo
 {
     private static final Logger LOG = LoggerFactory.getLogger( AbstractLicenseMojo.class );
 
@@ -167,6 +167,7 @@ public abstract class AbstractLicenseMojo
             try
             {
                 checkEncoding();
+                UrlRequester.setHttpClientSupplier( this);
 
                 init();
 
@@ -423,5 +424,4 @@ public abstract class AbstractLicenseMojo
     {
         return rejectPackaging( "pom" );
     }
-
 }
